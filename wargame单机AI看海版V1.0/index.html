@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第二次布匿战争 - 战略游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="map-area">
+            <!-- 城市状态显示框 -->
+            <div class="city-status-panel" id="cityStatusPanel" style="display: none;">
+                <div class="status-header">
+                    <h4 id="statusCityName">城市名称</h4>
+                    <button class="close-btn" onclick="closeCityStatus()">×</button>
+                </div>
+                <div class="city-details">
+                    <div class="city-header">
+                        <div class="city-faction" id="statusFaction">势力归属</div>
+                        <div class="city-importance" id="statusImportance">重要程度</div>
+                    </div>
+                    <div class="city-scores">
+                        <div class="score-row">
+                            <span class="score-label">政治分数:</span>
+                            <span class="score-value" id="statusPoliticalScore">-</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">经济分数:</span>
+                            <span class="score-value" id="statusEconomicScore">-</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">工事等级:</span>
+                            <span class="score-value" id="statusFortificationLevel">-</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对罗马态度:</span>
+                            <span class="score-value" id="statusRomeAttitude">-</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对迦太基态度:</span>
+                            <span class="score-value" id="statusCarthageAttitude">-</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对马其顿态度:</span>
+                            <span class="score-value" id="statusMacedoniaAttitude">-</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对塞琉古态度:</span>
+                            <span class="score-value" id="statusSeleucidAttitude">-</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对托勒密态度:</span>
+                            <span class="score-value" id="statusPtolemyAttitude">-</span>
+                        </div>
+                    </div>
+                    <div class="city-military">
+                        <div class="military-header">军事状况</div>
+                        <div class="siege-row">
+                            <span class="siege-label">围城状态</span>
+                            <span class="siege-value" id="statusSiege">无</span>
+                        </div>
+                        <div class="armies-section">
+                            <div class="armies-label">驻军情况:</div>
+                            <div id="statusArmies" class="status-armies">无驻军</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 防御方选择弹窗 -->
+            <div class="defense-choice-modal" id="defenseChoiceModal" style="display: none;">
+                <div class="defense-choice-container">
+                    <div class="defense-choice-header">
+                        <h3 id="defenseChoiceTitle">敌军来袭</h3>
+                        <button class="close-btn" onclick="closeDefenseChoice()">×</button>
+                        <div class="defense-situation" id="defenseSituation">汉尼拔的军队进入罗马，西庇阿如何应对</div>
+                    </div>
+                    <div class="defense-armies">
+                        <div class="army-side attacker">
+                            <div class="side-title">攻击</div>
+                            <div class="commander-info" id="defenseAttackerInfo">指挥官：汉尼拔</div>
+                            <div class="army-power" id="defenseAttackerPower">战斗力：500</div>
+                        </div>
+                        <div class="vs-divider">VS</div>
+                        <div class="army-side defender">
+                            <div class="side-title">防御</div>
+                            <div class="commander-info" id="defenseDefenderInfo">指挥官：西庇阿</div>
+                            <div class="army-power" id="defenseDefenderPower">战斗力：400</div>
+                        </div>
+                    </div>
+                    <div class="defense-choices">
+                        <div class="choice-title" id="defenseChoiceLabel">防御方可选择</div>
+                        <button class="btn choice-btn" onclick="requestReinforcements()" style="background-color: #3498db;">请求支援</button>
+                        <button class="btn choice-btn battle-choice" onclick="chooseDefenseAction('battle')">进行会战</button>
+                        <button class="btn choice-btn retreat-choice" onclick="chooseDefenseAction('retreat')">撤退至相邻区</button>
+                        <button class="btn choice-btn siege-choice" id="siegeChoiceBtn" onclick="chooseDefenseAction('siege')" style="display: none;">守城（进入围攻状态）</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 作战准备弹窗（防御方） -->
+            <div class="defense-choice-modal" id="battlePrepModal" style="display: none;">
+                <div class="defense-choice-container">
+                    <div class="defense-choice-header">
+                        <h3 id="battlePrepTitle">作战准备</h3>
+                        <div class="defense-situation" id="battlePrepSituation">准备迎战敌军</div>
+                    </div>
+                    <div class="defense-armies">
+                        <div class="army-side attacker">
+                            <div class="side-title">攻击方</div>
+                            <div class="commander-info" id="battlePrepAttackerInfo">指挥官：汉尼拔</div>
+                            <div class="army-power" id="battlePrepAttackerPower">战斗力：500</div>
+                        </div>
+                        <div class="vs-divider">VS</div>
+                        <div class="army-side defender">
+                            <div class="side-title">防御方</div>
+                            <div class="commander-info" id="battlePrepDefenderInfo">指挥官：西庇阿</div>
+                            <div class="army-power" id="battlePrepDefenderPower">战斗力：400</div>
+                        </div>
+                    </div>
+                    <div class="defense-choices">
+                        <div class="choice-title">作战准备</div>
+                        <button class="btn choice-btn" onclick="requestBattleReinforcements()" style="background-color: #3498db;">请求援军</button>
+                        <button class="btn choice-btn" onclick="returnToDefenseChoice()" style="background-color: #95a5a6;">返回</button>
+                        <button class="btn choice-btn battle-choice" onclick="confirmBattle()" style="background-color: #27ae60;">确定作战</button>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 12px; color: #bdc3c7; text-align: center;">
+                        请求援军后，附近友军会支援你的部队
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 战斗模式选择弹窗 -->
+            <div class="defense-choice-modal" id="battleModeModal" style="display: none;">
+                <div class="defense-choice-container">
+                    <div class="defense-choice-header">
+                        <h3 id="battleModeTitle">选择战斗模式</h3>
+                        <div class="defense-situation" id="battleModeSituation">请选择如何进行这场会战</div>
+                    </div>
+                    <div class="defense-armies">
+                        <div class="army-side attacker">
+                            <div class="side-title">攻击方</div>
+                            <div class="commander-info" id="battleModeAttackerInfo">指挥官：汉尼拔</div>
+                            <div class="army-power" id="battleModeAttackerPower">战斗力：500</div>
+                        </div>
+                        <div class="vs-divider">VS</div>
+                        <div class="army-side defender">
+                            <div class="side-title">防御方</div>
+                            <div class="commander-info" id="battleModeDefenderInfo">指挥官：西庇阿</div>
+                            <div class="army-power" id="battleModeDefenderPower">战斗力：400</div>
+                        </div>
+                    </div>
+                    <div class="defense-choices">
+                        <div class="choice-title">战斗模式</div>
+                        <button class="btn choice-btn battle-choice" onclick="chooseBattleMode('auto')" style="background-color: #3498db;">自动战斗（快速）</button>
+                        <button class="btn choice-btn" onclick="chooseBattleMode('detailed')" style="background-color: #e74c3c;">详细会战（战棋）</button>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 12px; color: #bdc3c7; text-align: center; line-height: 1.6;">
+                        <strong>自动战斗</strong>：快速进行，根据战斗力对比投骰子决定胜负<br>
+                        <strong>详细会战</strong>：进入战棋模式，逐阶段指挥作战
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 支援请求弹窗 -->
+            <div class="defense-choice-modal" id="reinforcementModal" style="display: none;">
+                <div class="defense-choice-container" style="max-width: 600px;">
+                    <div class="defense-choice-header">
+                        <h3 id="reinforcementTitle">请求支援</h3>
+                        <button class="close-btn" onclick="closeReinforcementModal()">×</button>
+                        <div class="defense-situation" id="reinforcementSituation">选择支援部队</div>
+                    </div>
+                    <div style="padding: 15px;">
+                        <!-- 被支援部队信息 -->
+                        <div style="background: rgba(231, 76, 60, 0.2); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 14px; color: #ecf0f1; margin-bottom: 8px;">
+                                <strong>被攻击部队</strong>
+                            </div>
+                            <div id="reinforcementDefenderInfo" style="font-size: 13px; color: #bdc3c7;">
+                                指挥官：西庇阿<br>
+                                战斗力：400
+                            </div>
+                        </div>
+                        
+                        <!-- 可支援部队列表 -->
+                        <div style="background: rgba(52, 73, 94, 0.5); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px;">
+                                <strong>可请求支援的部队</strong>
+                            </div>
+                            <div id="reinforcementArmiesList" style="max-height: 300px; overflow-y: auto;">
+                                <!-- 动态生成支援部队列表 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 支援说明 -->
+                        <div style="font-size: 12px; color: #95a5a6; text-align: center; line-height: 1.6;">
+                            <strong>支援规则</strong><br>
+                            • 投掷2D6，结果≤10则支援成功<br>
+                            • 支援部队损失2D6×10%的兵力<br>
+                            • 损失的兵力加入被攻击部队
+                        </div>
+                    </div>
+                    
+                    <div class="defense-choices">
+                        <button class="btn choice-btn retreat-choice" onclick="closeReinforcementModal()" style="width: 100%;">返回</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 国债选择弹窗 -->
+            <div class="defense-choice-modal" id="debtModal" style="display: none;">
+                <div class="defense-choice-container">
+                    <div class="defense-choice-header">
+                        <h3 id="debtTitle">国债管理</h3>
+                        <button class="close-btn" onclick="closeDebtModal()">×</button>
+                        <div class="defense-situation" id="debtSituation">请选择国债操作</div>
+                    </div>
+                    <div class="debt-info" style="margin: 15px 0; padding: 10px; background: rgba(52, 73, 94, 0.5); border-radius: 5px;">
+                        <div style="display: flex; justify-content: space-around; font-size: 14px;">
+                            <div>
+                                <span style="color: #bdc3c7;">当前资金：</span>
+                                <span id="debtCurrentFunds" style="color: #f39c12; font-weight: bold;">1000</span>
+                            </div>
+                            <div>
+                                <span style="color: #bdc3c7;">当前债务：</span>
+                                <span id="debtCurrentDebt" style="color: #e74c3c; font-weight: bold;">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="defense-choices">
+                        <div class="choice-title">请选择操作</div>
+                        <button class="btn choice-btn battle-choice" onclick="executeDebtAction('borrow')">借款 +2000</button>
+                        <button class="btn choice-btn retreat-choice" onclick="executeDebtAction('repay')">还款（全额）</button>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 12px; color: #bdc3c7; text-align: center;">
+                        <strong>借款说明</strong><br>
+                        • 每次借款 +2000 资金<br>
+                        • 增加等额债务<br>
+                        • 债务每回合产生利息惩罚<br>
+                        <br>
+                        <strong>还款说明</strong><br>
+                        • 一次性偿还全部债务<br>
+                        • 需要足够的资金
+                    </div>
+                </div>
+            </div>
+
+            <!-- 城市摧毁选择弹窗 -->
+            <div class="defense-choice-modal" id="cityDestroyModal" style="display: none;">
+                <div class="defense-choice-container">
+                    <div class="defense-choice-header">
+                        <h3 id="cityDestroyTitle">围城成功</h3>
+                        <div class="defense-situation" id="cityDestroySituation">您已成功攻克该城市，是否摧毁这座城市</div>
+                    </div>
+                    <div class="defense-choices">
+                        <div class="choice-title">请选择</div>
+                        <button class="btn choice-btn battle-choice" onclick="chooseCityDestroy(true)">摧毁城市</button>
+                        <button class="btn choice-btn retreat-choice" onclick="chooseCityDestroy(false)">保留城市</button>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 12px; color: #bdc3c7; text-align: center;">
+                        <strong>摧毁城市效果</strong><br>
+                        • 政治分和经济分降低为1<br>
+                        • 对双方阵营的好感度归零<br>
+                        • <span style="color: #f39c12;">抢劫资金 = 经济分 × 10</span><br>
+                        • <span style="color: #3498db;">攻城部队士气提升至5</span><br>
+                        • <span style="color: #e74c3c;">周边相邻城市对该阵营态度 -1</span><br>
+                        • <span style="color: #9b59b6;">周边中立城市投D6：1=加入对方，6=加入己方</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 胜利弹窗 -->
+            <div class="defense-choice-modal" id="victoryModal" style="display: none;">
+                <div class="defense-choice-container" style="max-width: 700px;">
+                    <div class="defense-choice-header" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.3), rgba(243, 156, 18, 0.3));">
+                        <h3 id="victoryTitle" style="font-size: 32px; color: #f39c12;">🏆 胜利！</h3>
+                        <div class="defense-situation" id="victorySituation" style="font-size: 18px; margin-top: 10px;">战争结束！</div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <!-- 胜利阵营 -->
+                        <div id="victoryFaction" style="text-align: center; font-size: 24px; font-weight: bold; margin: 15px 0; padding: 15px; border-radius: 8px; background: linear-gradient(135deg, rgba(52, 73, 94, 0.2), rgba(44, 62, 80, 0.2)); color: #ecf0f1;">
+                            胜利阵营
+                        </div>
+                        
+                        <!-- 胜利条件 -->
+                        <div style="background: rgba(52, 73, 94, 0.5); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <div style="font-size: 16px; font-weight: bold; color: #f39c12; margin-bottom: 10px; text-align: center;">
+                                达成胜利条件
+                            </div>
+                            <div id="victoryConditions" style="font-size: 14px; color: #ecf0f1; line-height: 1.8; text-align: center;">
+                                胜利条件将在此显示
+                            </div>
+                        </div>
+                        
+                        <!-- 战争统计 -->
+                        <div style="background: rgba(52, 73, 94, 0.3); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <div style="font-size: 14px; color: #bdc3c7; line-height: 1.8;">
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>战争时长：</span>
+                                    <span id="victoryDuration" style="color: #ecf0f1; font-weight: bold;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>回合数：</span>
+                                    <span id="victoryTurns" style="color: #ecf0f1; font-weight: bold;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>最终得分：</span>
+                                    <span id="victoryScore" style="color: #f39c12; font-weight: bold;">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; font-size: 13px; color: #95a6a6; text-align: center; font-style: italic;">
+                            "第二次布匿战争是罗马和迦太基之间最激烈的较量，<br>决定了地中海世界未来数百年的命运。"
+                        </div>
+                    </div>
+                    
+                    <div class="defense-choices">
+                        <button class="btn choice-btn battle-choice" onclick="closeVictoryModal()" style="width: 100%; font-size: 16px; padding: 12px;">关闭</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 会战结果弹窗 -->
+            <div class="defense-choice-modal" id="battleResultModal" style="display: none;">
+                <div class="defense-choice-container" style="max-width: 650px;">
+                    <div class="defense-choice-header">
+                        <h3 id="battleResultTitle">会战结束</h3>
+                        <div class="defense-situation" id="battleResultSituation">战斗结算</div>
+                    </div>
+                    <div class="battle-result-content">
+                        <!-- 胜负显示 -->
+                        <div class="battle-result-winner" id="battleResultWinner" style="text-align: center; font-size: 28px; font-weight: bold; margin: 20px 0; padding: 15px; border-radius: 8px; background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(39, 174, 96, 0.2));">
+                            🏆 罗马获胜！
+                        </div>
+                        
+                        <!-- 双方战果 -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                            <!-- 胜利方 -->
+                            <div class="battle-result-side winner-side" id="battleResultWinnerSide">
+                                <div style="background: rgba(46, 204, 113, 0.2); padding: 12px; border-radius: 8px; border: 2px solid #2ecc71;">
+                                    <div style="font-size: 18px; font-weight: bold; color: #2ecc71; margin-bottom: 10px; text-align: center;">
+                                        <span id="battleResultWinnerName">罗马</span> (胜利)
+                                    </div>
+                                    <div style="font-size: 14px; color: #bdc3c7; margin: 5px 0;">
+                                        指挥官：<span id="battleResultWinnerCommander" style="color: #ecf0f1; font-weight: bold;">西庇阿</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #bdc3c7; margin: 5px 0;">
+                                        剩余分值：<span id="battleResultWinnerPoints" style="color: #2ecc71; font-weight: bold;">75%</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #f39c12; margin: 5px 0; font-weight: bold;">
+                                        🎲 兵力损失：<span id="battleResultWinnerLoss">3%</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #3498db; margin: 5px 0; font-weight: bold;">
+                                        士气：<span id="battleResultWinnerMorale">5.0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 失败方 -->
+                            <div class="battle-result-side loser-side" id="battleResultLoserSide">
+                                <div style="background: rgba(231, 76, 60, 0.2); padding: 12px; border-radius: 8px; border: 2px solid #e74c3c;">
+                                    <div style="font-size: 18px; font-weight: bold; color: #e74c3c; margin-bottom: 10px; text-align: center;">
+                                        <span id="battleResultLoserName">迦太基</span> (失败)
+                                    </div>
+                                    <div style="font-size: 14px; color: #bdc3c7; margin: 5px 0;">
+                                        指挥官：<span id="battleResultLoserCommander" style="color: #ecf0f1; font-weight: bold;">汉尼拔</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #bdc3c7; margin: 5px 0;">
+                                        剩余分值：<span id="battleResultLoserPoints" style="color: #e74c3c; font-weight: bold;">35%</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #f39c12; margin: 5px 0; font-weight: bold;">
+                                        🎲 兵力损失：<span id="battleResultLoserLoss">26%</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #3498db; margin: 5px 0; font-weight: bold;">
+                                        士气：<span id="battleResultLoserMorale">1.0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 骰子详情 -->
+                        <div style="background: rgba(52, 73, 94, 0.5); padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 13px; color: #bdc3c7; text-align: center;">
+                            <div id="battleResultDiceDetails" style="line-height: 1.8;">
+                                🎲 骰子结果：胜利方 D6=3，失败方 2D6=6
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="defense-choices">
+                        <button class="btn choice-btn battle-choice" onclick="closeBattleResultModal()" style="width: 100%; font-size: 16px; padding: 12px;">确认</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手动增加军队弹窗 -->
+            <div class="defense-choice-modal" id="addArmyModal" style="display: none;">
+                <div class="defense-choice-container" style="max-width: 600px;">
+                    <div class="defense-choice-header">
+                        <h3>手动增加军队</h3>
+                        <button class="close-btn" onclick="closeAddArmyModal()">×</button>
+                        <div class="defense-situation" id="addArmySituation">选择派系和位置</div>
+                    </div>
+                    
+                    <!-- 第一步：选择派系 -->
+                    <div id="addArmyStep1" style="padding: 15px;">
+                        <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                            第一步：选择派系
+                        </div>
+                        <div class="defense-choices" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn choice-btn" onclick="selectAddArmyFaction('rome')" style="background-color: #e74c3c;">🏛️ 罗马</button>
+                            <button class="btn choice-btn" onclick="selectAddArmyFaction('carthage')" style="background-color: #9b59b6;">🐘 迦太基</button>
+                            <button class="btn choice-btn" onclick="selectAddArmyFaction('macedonia')" style="background-color: #3498db;">⚔️ 马其顿</button>
+                            <button class="btn choice-btn" onclick="selectAddArmyFaction('seleucid')" style="background-color: #16a085;">🏺 塞琉古</button>
+                            <button class="btn choice-btn" onclick="selectAddArmyFaction('ptolemy')" style="background-color: #f39c12;">🦅 托勒密</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 第二步：选择地区 -->
+                    <div id="addArmyStep2" style="display: none; padding: 15px;">
+                        <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                            第二步：选择地区
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <button class="btn" onclick="selectAddArmyRegion('default')" style="background-color: #27ae60; width: 100%; font-weight: bold;">⭐ 默认（派系首都）</button>
+                        </div>
+                        <div class="defense-choices" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <button class="btn" onclick="selectAddArmyRegion('spain')" style="font-size: 12px; padding: 8px;">西班牙</button>
+                            <button class="btn" onclick="selectAddArmyRegion('gaul')" style="font-size: 12px; padding: 8px;">高卢</button>
+                            <button class="btn" onclick="selectAddArmyRegion('italy')" style="font-size: 12px; padding: 8px;">意大利</button>
+                            <button class="btn" onclick="selectAddArmyRegion('sicily')" style="font-size: 12px; padding: 8px;">西西里</button>
+                            <button class="btn" onclick="selectAddArmyRegion('north_africa')" style="font-size: 12px; padding: 8px;">北非</button>
+                            <button class="btn" onclick="selectAddArmyRegion('balkans')" style="font-size: 12px; padding: 8px;">巴尔干</button>
+                            <button class="btn" onclick="selectAddArmyRegion('greece')" style="font-size: 12px; padding: 8px;">希腊</button>
+                            <button class="btn" onclick="selectAddArmyRegion('asia_minor')" style="font-size: 12px; padding: 8px;">小亚细亚</button>
+                            <button class="btn" onclick="selectAddArmyRegion('levant')" style="font-size: 12px; padding: 8px;">黎凡特</button>
+                            <button class="btn" onclick="selectAddArmyRegion('egypt')" style="font-size: 12px; padding: 8px;">埃及</button>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn" onclick="backToAddArmyStep1()" style="background-color: #95a5a6; width: 100%;">返回</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 第三步：选择城市 -->
+                    <div id="addArmyStep3" style="display: none; padding: 15px;">
+                        <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                            第三步：选择城市
+                        </div>
+                        <div id="addArmyCityList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 300px; overflow-y: auto;">
+                            <!-- 动态生成城市列表 -->
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn" onclick="backToAddArmyStep2()" style="background-color: #95a5a6; width: 100%;">返回</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 第四步：设置将领信息 -->
+                    <div id="addArmyStep4" style="display: none; padding: 15px;">
+                        <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                            第四步：设置将领信息
+                        </div>
+                        
+                        <!-- 将领名字输入 -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 13px; color: #ecf0f1; margin-bottom: 5px;">将领名字：</label>
+                            <input type="text" id="addArmyCommanderName" placeholder="输入将领名字（留空则使用默认）" 
+                                   style="width: 100%; padding: 8px; font-size: 13px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                        </div>
+                        
+                        <!-- 将领属性设置 -->
+                        <div style="background: rgba(52, 73, 94, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 13px; color: #bdc3c7; margin-bottom: 10px;">将领属性（留空则使用默认值7）</div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #ecf0f1; margin-bottom: 3px;">军事能力 (1-10)：</label>
+                                <input type="number" id="addArmyMilitary" min="1" max="10" placeholder="7" 
+                                       style="width: 100%; padding: 6px; font-size: 12px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #ecf0f1; margin-bottom: 3px;">政治能力 (1-10)：</label>
+                                <input type="number" id="addArmyPolitical" min="1" max="10" placeholder="7" 
+                                       style="width: 100%; padding: 6px; font-size: 12px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #ecf0f1; margin-bottom: 3px;">外交能力 (1-10)：</label>
+                                <input type="number" id="addArmyDiplomatic" min="1" max="10" placeholder="7" 
+                                       style="width: 100%; padding: 6px; font-size: 12px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 11px; color: #95a5a6; margin-bottom: 15px; text-align: center;">
+                            提示：所有字段留空将使用默认值生成将领
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn" onclick="backToAddArmyStep3()" style="background-color: #95a5a6;">返回</button>
+                            <button class="btn choice-btn battle-choice" onclick="confirmAddArmy()">创建军队</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手动增加资金弹窗 -->
+            <div class="defense-choice-modal" id="addFundsModal" style="display: none;">
+                <div class="defense-choice-container" style="max-width: 500px;">
+                    <div class="defense-choice-header">
+                        <h3>手动增加资金</h3>
+                        <button class="close-btn" onclick="closeAddFundsModal()">×</button>
+                        <div class="defense-situation" id="addFundsSituation">选择派系并输入金额</div>
+                    </div>
+                    
+                    <div style="padding: 15px;">
+                        <!-- 选择派系 -->
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                                选择派系
+                            </div>
+                            <div class="defense-choices" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button class="btn choice-btn" onclick="selectFundsTarget('rome')" style="background-color: #e74c3c;">🏛️ 罗马</button>
+                                <button class="btn choice-btn" onclick="selectFundsTarget('carthage')" style="background-color: #9b59b6;">🐘 迦太基</button>
+                                <button class="btn choice-btn" onclick="selectFundsTarget('macedonia')" style="background-color: #3498db;">⚔️ 马其顿</button>
+                                <button class="btn choice-btn" onclick="selectFundsTarget('seleucid')" style="background-color: #16a085;">🏺 塞琉古</button>
+                                <button class="btn choice-btn" onclick="selectFundsTarget('ptolemy')" style="background-color: #f39c12;">🦅 托勒密</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 输入金额 -->
+                        <div id="addFundsAmountSection" style="display: none; margin-bottom: 15px;">
+                            <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                                输入金额
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 13px; color: #ecf0f1; margin-bottom: 5px;">增加金额：</label>
+                                <input type="number" id="addFundsAmount" min="1" placeholder="2000" value="2000"
+                                       style="width: 100%; padding: 8px; font-size: 13px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                            </div>
+                            <div style="font-size: 11px; color: #95a5a6; text-align: center;">
+                                默认增加2000资金
+                            </div>
+                        </div>
+                        
+                        <!-- 当前资金显示 -->
+                        <div id="addFundsCurrentDisplay" style="display: none; background: rgba(52, 73, 94, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 13px; color: #bdc3c7; text-align: center;">
+                                <span id="addFundsTargetName">派系</span>当前资金：<span id="addFundsCurrentAmount" style="color: #f39c12; font-weight: bold;">0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div id="addFundsButtons" style="display: none;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button class="btn choice-btn" onclick="resetAddFundsModal()" style="background-color: #95a5a6;">返回</button>
+                                <button class="btn choice-btn" onclick="confirmAddFunds()" style="background-color: #27ae60;">确认增加</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 修改将领属性弹窗 -->
+            <div class="defense-choice-modal" id="modifyCommanderModal" style="display: none;">
+                <div class="defense-choice-container" style="max-width: 550px;">
+                    <div class="defense-choice-header">
+                        <h3>修改将领属性</h3>
+                        <button class="close-btn" onclick="closeModifyCommanderModal()">×</button>
+                        <div class="defense-situation" id="modifyCommanderSituation">选择派系和军队</div>
+                    </div>
+                    
+                    <!-- 第一步：选择派系 -->
+                    <div id="modifyCommanderStep1" style="padding: 15px;">
+                        <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                            第一步：选择派系
+                        </div>
+                        <div class="defense-choices" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn choice-btn" onclick="selectModifyFaction('rome')" style="background-color: #e74c3c;">🏛️ 罗马</button>
+                            <button class="btn choice-btn" onclick="selectModifyFaction('carthage')" style="background-color: #9b59b6;">🐘 迦太基</button>
+                            <button class="btn choice-btn" onclick="selectModifyFaction('macedonia')" style="background-color: #3498db;">⚔️ 马其顿</button>
+                            <button class="btn choice-btn" onclick="selectModifyFaction('seleucid')" style="background-color: #16a085;">🏺 塞琉古</button>
+                            <button class="btn choice-btn" onclick="selectModifyFaction('ptolemy')" style="background-color: #f39c12;">🦅 托勒密</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 第二步：选择军队 -->
+                    <div id="modifyCommanderStep2" style="display: none; padding: 15px;">
+                        <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                            第二步：选择军队
+                        </div>
+                        <div id="modifyCommanderArmyList" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;">
+                            <!-- 动态生成军队列表 -->
+                        </div>
+                        <button class="btn choice-btn" onclick="backToModifyStep1()" style="background-color: #95a5a6; width: 100%;">返回</button>
+                    </div>
+                    
+                    <!-- 第三步：修改属性 -->
+                    <div id="modifyCommanderStep3" style="display: none; padding: 15px;">
+                        <div style="font-size: 14px; color: #f39c12; margin-bottom: 10px; font-weight: bold;">
+                            第三步：修改属性
+                        </div>
+                        
+                        <!-- 当前将领信息 -->
+                        <div style="background: rgba(52, 73, 94, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 13px; color: #ecf0f1; margin-bottom: 8px;">
+                                <strong>将领：</strong><span id="modifyCommanderName">-</span>
+                            </div>
+                            <div style="font-size: 12px; color: #bdc3c7; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                                <div>军事：<span id="modifyCurrentMilitary" style="color: #f39c12;">-</span></div>
+                                <div>政治：<span id="modifyCurrentPolitical" style="color: #f39c12;">-</span></div>
+                                <div>外交：<span id="modifyCurrentDiplomatic" style="color: #f39c12;">-</span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 新属性输入 -->
+                        <div style="background: rgba(52, 73, 94, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 13px; color: #bdc3c7; margin-bottom: 10px;">新属性（留空则当前值+1）</div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #ecf0f1; margin-bottom: 3px;">军事能力 (1-10)：</label>
+                                <input type="number" id="modifyMilitary" min="1" max="10" placeholder="当前值+1"
+                                       style="width: 100%; padding: 6px; font-size: 12px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #ecf0f1; margin-bottom: 3px;">政治能力 (1-10)：</label>
+                                <input type="number" id="modifyPolitical" min="1" max="10" placeholder="当前值+1"
+                                       style="width: 100%; padding: 6px; font-size: 12px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #ecf0f1; margin-bottom: 3px;">外交能力 (1-10)：</label>
+                                <input type="number" id="modifyDiplomatic" min="1" max="10" placeholder="当前值+1"
+                                       style="width: 100%; padding: 6px; font-size: 12px; background: rgba(52, 73, 94, 0.5); border: 1px solid #34495e; border-radius: 4px; color: #ecf0f1;">
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 11px; color: #95a5a6; margin-bottom: 15px; text-align: center;">
+                            提示：所有字段留空将使当前属性各+1
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn choice-btn" onclick="backToModifyStep2()" style="background-color: #95a5a6;">返回</button>
+                            <button class="btn choice-btn" onclick="confirmModifyCommander()" style="background-color: #3498db;">确认修改</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 会战弹窗 -->
+            <div class="battle-modal" id="battleModal" style="display: none;">
+                <div class="battle-container">
+                    <div class="battle-header">
+                        <h3 id="battleTitle">会战进行</h3>
+                        <div class="battle-location" id="battleLocation">战场：罗马</div>
+                    </div>
+                    <div class="battle-armies">
+                        <div class="army-side attacker">
+                            <div class="side-title">攻击</div>
+                            <div class="commander-info" id="attackerInfo">指挥官：汉尼拔</div>
+                            <div class="army-stats" id="attackerStats">
+                                <div class="stat-item">轻骑兵<span id="attackerLightCav">2000</span></div>
+                                <div class="stat-item">重骑兵<span id="attackerHeavyCav">1000</span></div>
+                                <div class="stat-item">重步兵<span id="attackerHeavyInf">20000</span></div>
+                                <div class="stat-item">轻装步兵<span id="attackerLightInf">2000</span></div>
+                                <div class="stat-item morale">士气: <span id="attackerMorale">5.0</span></div>
+                            </div>
+                        </div>
+                        <div class="vs-divider">VS</div>
+                        <div class="army-side defender">
+                            <div class="side-title">防御</div>
+                            <div class="commander-info" id="defenderInfo">指挥官：西庇阿</div>
+                            <div class="army-stats" id="defenderStats">
+                                <div class="stat-item">轻骑兵<span id="defenderLightCav">2000</span></div>
+                                <div class="stat-item">重骑兵<span id="defenderHeavyCav">1000</span></div>
+                                <div class="stat-item">重步兵<span id="defenderHeavyInf">20000</span></div>
+                                <div class="stat-item">轻装步兵<span id="defenderLightInf">2000</span></div>
+                                <div class="stat-item morale">士气: <span id="defenderMorale">5.0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="battle-phases">
+                        <div class="phase-indicator">
+                            <div class="phase active" id="phase1">轻骑兵战斗</div>
+                            <div class="phase" id="phase2">轻骑兵与重骑兵战斗</div>
+                            <div class="phase" id="phase3">轻装步兵战斗</div>
+                            <div class="phase" id="phase4">决战</div>
+                        </div>
+                    </div>
+                    <div class="battle-log" id="battleLog">
+                        <div class="log-title">战斗记录</div>
+                        <div class="log-content" id="battleLogContent">
+                            会战开始...
+                        </div>
+                    </div>
+                    <div class="battle-controls">
+                        <button class="btn battle-btn" id="nextPhaseBtn" onclick="nextBattlePhase()">开始第一阶段</button>
+                        <button class="btn battle-btn" id="closeBattleBtn" onclick="closeBattle()" style="display: none;">关闭</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="map-container" id="mapContainer">
+                <!-- 城市将通过JavaScript动态生成-->
+            </div>
+            
+            <!-- 城市悬停提示框 -->
+            <div id="cityTooltip" class="city-tooltip" style="display: none;">
+                <div class="tooltip-header">
+                    <span id="tooltipCityName">城市名称</span>
+                    <span id="tooltipFaction" class="tooltip-faction">中立</span>
+                </div>
+                <div class="tooltip-content">
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">政治分：</span>
+                        <span id="tooltipPolitical" class="tooltip-value">0</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">经济分：</span>
+                        <span id="tooltipEconomic" class="tooltip-value">0</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">工事等级：</span>
+                        <span id="tooltipFortification" class="tooltip-value">0</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">对罗马态度：</span>
+                        <span id="tooltipRomeAttitude" class="tooltip-value">0</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">对迦太基态度：</span>
+                        <span id="tooltipCarthageAttitude" class="tooltip-value">0</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">对马其顿态度：</span>
+                        <span id="tooltipMacedoniaAttitude" class="tooltip-value">0</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">对塞琉古态度：</span>
+                        <span id="tooltipSeleucidAttitude" class="tooltip-value">0</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">对托勒密态度：</span>
+                        <span id="tooltipPtolemyAttitude" class="tooltip-value">0</span>
+                    </div>
+                    <div id="tooltipSiege" class="tooltip-siege" style="display: none;">
+                        <span class="tooltip-label">围城状态：</span>
+                        <span id="tooltipSiegeInfo" class="tooltip-value-siege">围城中</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 部队悬停提示框 -->
+            <div id="armyTooltip" class="army-tooltip" style="display: none;">
+                <div class="tooltip-header">
+                    <span id="tooltipArmyCommander">指挥官</span>
+                    <span id="tooltipArmyFaction" class="tooltip-faction">罗马</span>
+                </div>
+                <div class="tooltip-content">
+                    <div class="tooltip-section">
+                        <div class="tooltip-section-title">将领能力</div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">军事：</span>
+                            <span id="tooltipArmyMilitary" class="tooltip-value">0</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">政治：</span>
+                            <span id="tooltipArmyPolitical" class="tooltip-value">0</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">外交：</span>
+                            <span id="tooltipArmyDiplomatic" class="tooltip-value">0</span>
+                        </div>
+                    </div>
+                    <div class="tooltip-divider"></div>
+                    <div class="tooltip-section">
+                        <div class="tooltip-section-title">兵力构成</div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">轻骑兵：</span>
+                            <span id="tooltipArmyLightCav" class="tooltip-value">0</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">重骑兵：</span>
+                            <span id="tooltipArmyHeavyCav" class="tooltip-value">0</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">重步兵：</span>
+                            <span id="tooltipArmyHeavyInf" class="tooltip-value">0</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">轻步兵：</span>
+                            <span id="tooltipArmyLightInf" class="tooltip-value">0</span>
+                        </div>
+                        <div class="tooltip-row tooltip-highlight">
+                            <span class="tooltip-label">总兵力：</span>
+                            <span id="tooltipArmyTotal" class="tooltip-value-highlight">0</span>
+                        </div>
+                    </div>
+                    <div class="tooltip-divider"></div>
+                    <div class="tooltip-section">
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">士气：</span>
+                            <span id="tooltipArmyMorale" class="tooltip-value-morale">5.0</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">战斗力：</span>
+                            <span id="tooltipArmyCombatPower" class="tooltip-value-combat">0</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">位置：</span>
+                            <span id="tooltipArmyLocation" class="tooltip-value">未知</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">上回合：</span>
+                            <span id="tooltipArmyLastLocation" class="tooltip-value" style="color: #95a5a6;">-</span>
+                        </div>
+                    </div>
+                    <div id="tooltipArmyDecision" class="tooltip-divider" style="display: none;"></div>
+                    <div id="tooltipArmyDecisionSection" class="tooltip-section" style="display: none;">
+                        <div class="tooltip-section-title" style="color: #3498db;">🤖 AI决策</div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">行动：</span>
+                            <span id="tooltipArmyDecisionAction" class="tooltip-value" style="color: #27ae60; font-weight: bold;">-</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">原因：</span>
+                            <span id="tooltipArmyDecisionReason" class="tooltip-value">-</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">优先级：</span>
+                            <span id="tooltipArmyDecisionPriority" class="tooltip-value" style="color: #e67e22;">-</span>
+                        </div>
+                    </div>
+                    <div id="tooltipArmyActionResult" class="tooltip-divider" style="display: none;"></div>
+                    <div id="tooltipArmyActionResultSection" class="tooltip-section" style="display: none;">
+                        <div class="tooltip-section-title" style="color: #f39c12;">📋 本回合行动</div>
+                        <div id="tooltipArmyActionResultContent" style="color: #ecf0f1; margin-top: 2px;">
+                            暂无行动
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="turn-indicator" id="turnIndicator">
+                <div class="time-display" id="timeDisplay">公元前218年一月(春季)</div>
+                <div class="turn-display" id="turnDisplay">回合 1 - 罗马回合</div>
+                <div class="war-duration" id="warDuration">战争开始</div>
+            </div>
+            
+            <div class="panel-section">
+                <h3>阵营实力对比</h3>
+                <div class="faction-scores">
+                    <div class="faction-score-row">
+                        <div class="faction-label rome">罗马</div>
+                        <div class="score-item" style="display: none;">
+                            <span class="score-label">政治:</span>
+                            <span id="romePoliticalScore" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">经济:</span>
+                            <span id="romeEconomicScore" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">资金:</span>
+                            <span id="romeFunds" class="score-value">1000</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">债务:</span>
+                            <span id="romeDebt" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">上回合军费:</span>
+                            <span id="romeLastExpense" class="score-value">0</span>
+                        </div>
+                        <div class="score-item total">
+                            <span class="score-label">总分:</span>
+                            <span id="romeTotalScore" class="score-value">0</span>
+                        </div>
+                    </div>
+                    <div class="faction-score-row">
+                        <div class="faction-label carthage">迦太基</div>
+                        <div class="score-item" style="display: none;">
+                            <span class="score-label">政治:</span>
+                            <span id="carthagePoliticalScore" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">经济:</span>
+                            <span id="carthageEconomicScore" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">资金:</span>
+                            <span id="carthageFunds" class="score-value">1000</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">债务:</span>
+                            <span id="carthageDebt" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">上回合军费:</span>
+                            <span id="carthageLastExpense" class="score-value">0</span>
+                        </div>
+                        <div class="score-item total">
+                            <span class="score-label">总分:</span>
+                            <span id="carthageTotalScore" class="score-value">0</span>
+                        </div>
+                    </div>
+                    <div class="faction-score-row">
+                        <div class="faction-label macedonia">马其顿</div>
+                        <div class="score-item">
+                            <span class="score-label">经济:</span>
+                            <span id="macedoniaEconomicScore" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">资金:</span>
+                            <span id="macedoniaFunds" class="score-value">1000</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">债务:</span>
+                            <span id="macedoniaDebt" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">上回合军费:</span>
+                            <span id="macedoniaLastExpense" class="score-value">0</span>
+                        </div>
+                        <div class="score-item total">
+                            <span class="score-label">总分:</span>
+                            <span id="macedoniaTotalScore" class="score-value">0</span>
+                        </div>
+                        <!-- 联盟状态显示 -->
+                        <div class="score-item" style="grid-column: 1 / -1; margin-top: 8px; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                            <div class="alliance-status neutral" id="macedoniaAllianceStatus">
+                                <span id="macedoniaAllianceText" style="font-size: 8px; font-weight: 500;">保持中立</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="faction-score-row">
+                        <div class="faction-label seleucid">塞琉古</div>
+                        <div class="score-item">
+                            <span class="score-label">经济:</span>
+                            <span id="seleucidEconomicScore" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">资金:</span>
+                            <span id="seleucidFunds" class="score-value">2000</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">债务:</span>
+                            <span id="seleucidDebt" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">上回合军费:</span>
+                            <span id="seleucidLastExpense" class="score-value">0</span>
+                        </div>
+                        <div class="score-item total">
+                            <span class="score-label">总分:</span>
+                            <span id="seleucidTotalScore" class="score-value">0</span>
+                        </div>
+                        <!-- 联盟状态显示 -->
+                        <div class="score-item" style="grid-column: 1 / -1; margin-top: 8px; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                            <div class="alliance-status neutral" id="seleucidAllianceStatus">
+                                <span id="seleucidAllianceText" style="font-size: 8px; font-weight: 500;">保持中立</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="faction-score-row">
+                        <div class="faction-label ptolemy">托勒密</div>
+                        <div class="score-item">
+                            <span class="score-label">经济:</span>
+                            <span id="ptolemyEconomicScore" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">资金:</span>
+                            <span id="ptolemyFunds" class="score-value">2000</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">债务:</span>
+                            <span id="ptolemyDebt" class="score-value">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">上回合军费:</span>
+                            <span id="ptolemyLastExpense" class="score-value">0</span>
+                        </div>
+                        <div class="score-item total">
+                            <span class="score-label">总分:</span>
+                            <span id="ptolemyTotalScore" class="score-value">0</span>
+                        </div>
+                        <!-- 联盟状态显示 -->
+                        <div class="score-item" style="grid-column: 1 / -1; margin-top: 8px; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                            <div class="alliance-status neutral" id="ptolemyAllianceStatus">
+                                <span id="ptolemyAllianceText" style="font-size: 8px; font-weight: 500;">保持中立</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="score-summary">
+                        <div id="dominanceIndicator" class="dominance-indicator">势均力敌</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-section" style="display: none;">
+                <h3>地图控制</h3>
+                <div class="action-buttons">
+                    <button class="btn" id="editModeBtn" onclick="toggleEditMode()">调整坐标</button>
+                    <button class="btn" id="saveBtn" onclick="saveCoordinates()" disabled>保存坐标</button>
+                    <button class="btn" onclick="exportCoordinates()">导出数据</button>
+                    <button class="btn" onclick="exportCityArray()">导出城市数组</button>
+                    <button class="btn" onclick="toggleDebug()">调试模式</button>
+                    <button class="btn" onclick="recalibrate()">重新校准</button>
+                    <button class="btn" onclick="testAlignment()">测试对齐</button>
+                    <button class="btn" onclick="fixPositions()">修复位置</button>
+                    <button class="btn" onclick="absoluteFix()">绝对修复</button>
+                                    <button class="btn" onclick="diagnose()">诊断</button>
+                <button class="btn" onclick="testCommanderSystem()">测试指挥官系统</button>
+            </div>
+        </div>
+
+            <div class="panel-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <h3 style="margin: 0;">游戏日志</h3>
+                    <button id="logPauseBtn" class="btn log-control-btn" onclick="toggleLogPause()" style="padding: 3px 8px; font-size: 11px; background-color: #95a5a6;">
+                        <span id="logPauseIcon">⏸️</span> <span id="logPauseText">暂停</span>
+                    </button>
+                </div>
+                <div id="gameLog" class="game-log">
+                    <div class="log-entry">游戏开始- 公元前218年</div>
+                    <div class="log-entry">汉尼拔已准备跨越阿尔卑斯山脉</div>
+                </div>
+            </div>
+
+            <div class="panel-section" id="armyActionPanel" style="display: block;">
+                <h4>军队行动状态</h4>
+                <div class="army-action-list">
+                    <!-- 动态生成的军队行动列表 -->
+                </div>
+            </div>
+            
+            <div class="panel-section" id="actionSelectionPanel">
+                <h3>行动选择</h3>
+                <div class="action-buttons">
+                    <button class="btn" onclick="executeAction('move')">移动</button>
+                    <button class="btn" onclick="executeAction('attack')">攻击</button>
+                    <button class="btn" onclick="executeAction('siege')">围城</button>
+                    <button class="btn" onclick="executeAction('harass')">骚扰</button>
+                    <button class="btn" onclick="executeAction('diplomacy')">游说</button>
+                    <button class="btn" onclick="executeAction('recruit')">征召</button>
+                    <button class="btn" onclick="executeAction('reorganize')">整编</button>
+                    <button class="btn" onclick="executeAction('fortify')">修筑</button>
+                    <button class="btn" onclick="executeAction('raise_army')">组军</button>
+                    <button class="btn" onclick="showDebtModal()">国债</button>
+                    <button class="btn" onclick="executeAction('disband')" style="background-color: #95a5a6;">解散</button>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3>回合控制</h3>
+                <div class="action-buttons">
+                    <button class="btn pause-btn" id="globalPauseBtn" onclick="toggleGlobalPause()" style="background-color: #f39c12;">
+                        <span id="pauseIcon">⏸️</span> <span id="pauseText">暂停游戏</span>
+                    </button>
+                    <button class="btn skip-btn" onclick="ArmyActionManager.skipCurrentArmy()" style="background-color: #95a5a6;">跳过当前军队</button>
+                    <button class="btn end-turn-btn" onclick="endTurn()" style="background-color: #e74c3c;">结束回合</button>
+                </div>
+            </div>
+            
+            <!-- 手动增加军队/资金/修改将领属性栏目 -->
+            <div class="panel-section">
+                <h3>手动增加军队/资金/修改将领属性</h3>
+                <div class="action-buttons" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <button class="btn" onclick="showAddArmyModal()" style="background-color: #27ae60;">
+                        ✨ 手动生成军队
+                    </button>
+                    <button class="btn" onclick="showAddFundsModal()" style="background-color: #f39c12;">
+                        💰 手动增加资金
+                    </button>
+                    <button class="btn" onclick="showModifyCommanderModal()" style="background-color: #3498db;">
+                        ⚔️ 修改将领属性
+                    </button>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3>AI控制</h3>
+                <div class="ai-status-display">
+                    <span id="aiStatus">AI: 关闭</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn ai-rome-btn" onclick="AIController.toggle('rome')" style="background-color: #e74c3c;">🏛️ AI控制罗马</button>
+                    <button class="btn ai-carthage-btn" onclick="CarthageAIController.toggle('carthage')" style="background-color: #9b59b6;">🐘 AI控制迦太基</button>
+                    <button class="btn ai-macedonia-btn" onclick="toggleMacedoniaAI()" style="background-color: #3498db;">⚔️ AI控制马其顿</button>
+                    <button class="btn ai-seleucid-btn" onclick="toggleSeleucidAI()" style="background-color: #16a085;">🏺 AI控制塞琉古</button>
+                    <button class="btn ai-ptolemy-btn" onclick="togglePtolemyAI()" style="background-color: #f39c12;">🦅 AI控制托勒密</button>
+                </div>
+                <div id="macedoniaStrategyPanel" style="display: none; margin-top: 10px;">
+                    <div style="font-size: 12px; color: #ecf0f1; margin-bottom: 5px;">马其顿战略：</div>
+                    <div class="action-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <button class="btn strategy-btn" onclick="MacedoniaAIController.switchStrategy('alexander')" style="background-color: #f39c12; font-size: 11px;">👑 亚历山大</button>
+                        <button class="btn strategy-btn" onclick="MacedoniaAIController.switchStrategy('syracuse')" style="background-color: #e67e22; font-size: 11px;">🏛️ 叙拉古</button>
+                        <button class="btn strategy-btn" onclick="MacedoniaAIController.switchStrategy('rome')" style="background-color: #e74c3c; font-size: 11px;">🏰 罗马</button>
+                        <button class="btn strategy-btn" onclick="MacedoniaAIController.switchStrategy('antiochus')" style="background-color: #16a085; font-size: 11px;">🛡️ 安条克</button>
+                        <button class="btn strategy-btn" onclick="MacedoniaAIController.switchStrategy('carthage')" style="background-color: #9b59b6; font-size: 11px;">🐘 迦太基</button>
+                    </div>
+                </div>
+                <div id="seleucidStrategyPanel" style="display: none; margin-top: 10px;">
+                    <div style="font-size: 12px; color: #ecf0f1; margin-bottom: 5px;">塞琉古战略：</div>
+                    <div class="action-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <button class="btn strategy-btn" onclick="SeleucidAIController.switchStrategy('alexander')" style="background-color: #f39c12; font-size: 11px;">👑 亚历山大</button>
+                        <button class="btn strategy-btn" onclick="SeleucidAIController.switchStrategy('syracuse')" style="background-color: #e67e22; font-size: 11px;">🏛️ 叙拉古</button>
+                        <button class="btn strategy-btn" onclick="SeleucidAIController.switchStrategy('rome')" style="background-color: #e74c3c; font-size: 11px;">🏰 罗马</button>
+                        <button class="btn strategy-btn" onclick="SeleucidAIController.switchStrategy('antiochus')" style="background-color: #16a085; font-size: 11px;">🛡️ 安条克</button>
+                        <button class="btn strategy-btn" onclick="SeleucidAIController.switchStrategy('carthage')" style="background-color: #9b59b6; font-size: 11px;">🐘 迦太基</button>
+                    </div>
+                </div>
+                <div id="ptolemyStrategyPanel" style="display: none; margin-top: 10px;">
+                    <div style="font-size: 12px; color: #ecf0f1; margin-bottom: 5px;">托勒密战略：</div>
+                    <div class="action-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <button class="btn strategy-btn" onclick="PtolemyAIController.switchStrategy('alexander')" style="background-color: #f39c12; font-size: 11px;">👑 亚历山大</button>
+                        <button class="btn strategy-btn" onclick="PtolemyAIController.switchStrategy('syracuse')" style="background-color: #e67e22; font-size: 11px;">🏛️ 叙拉古</button>
+                        <button class="btn strategy-btn" onclick="PtolemyAIController.switchStrategy('rome')" style="background-color: #e74c3c; font-size: 11px;">🏰 罗马</button>
+                        <button class="btn strategy-btn" onclick="PtolemyAIController.switchStrategy('antiochus')" style="background-color: #16a085; font-size: 11px;">🛡️ 安条克</button>
+                        <button class="btn strategy-btn" onclick="PtolemyAIController.switchStrategy('carthage')" style="background-color: #9b59b6; font-size: 11px;">🐘 迦太基</button>
+                    </div>
+                </div>
+                <div class="action-buttons" style="margin-top: 10px;">
+                    <button class="btn ai-watch-btn" onclick="toggleWatchMode()" style="background-color: #e67e22;">🍿 看海模式</button>
+                    <button class="btn ai-execute-btn" onclick="executeCurrentAI()" style="background-color: #2ecc71;">⚡ 立即执行AI</button>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: #95a5a6;">
+                    提示：可以同时启用多个派系AI，每个阵营独立控制<br>
+                    马其顿/塞琉古/托勒密AI支持5种战略模式：亚历山大/叙拉古/罗马/安条克/迦太基
+                </div>
+                <div style="margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.2); border-radius: 4px;">
+                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 12px;">
+                        <input type="checkbox" id="watchModeAutoCheckbox" onchange="toggleWatchModeAuto()" 
+                               style="margin-right: 8px; cursor: pointer; width: 16px; height: 16px;">
+                        <span style="color: #ecf0f1;">🎮 看海模式：塞琉古回合自动结束</span>
+                    </label>
+                    <div style="margin-top: 5px; font-size: 10px; color: #bdc3c7; margin-left: 24px;">
+                        勾选后迦太基AI回合将自动结束并循环；<br>
+                        不勾选则需手动点击"结束回合"按钮
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.2); border-radius: 4px;">
+                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 12px;">
+                        <input type="checkbox" id="armyLimitCheckbox" onchange="toggleArmyLimit()" checked
+                               style="margin-right: 8px; cursor: pointer; width: 16px; height: 16px;">
+                        <span style="color: #ecf0f1;">🎖️ 军队数量限制（最多5支）</span>
+                    </label>
+                    <div style="margin-top: 5px; font-size: 10px; color: #bdc3c7; margin-left: 24px;">
+                        勾选后每个派系最多5支军队；<br>
+                        不勾选则不限制军队数量
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-section" style="display: none;">
+                <h3>骰子结果</h3>
+                <div id="diceResult" class="dice-result" style="display: none;">
+                    等待行动...
+                </div>
+            </div>
+            
+            <div class="panel-section" id="armyDetailsPanel" style="display: none;">
+                <h3>部队详情</h3>
+                <div class="army-details">
+                    <div class="army-header">
+                        <div class="army-commander-name" id="detailCommanderName">指挥官</div>
+                        <div class="army-location" id="detailLocation">位置</div>
+                    </div>
+                    <div class="army-troops">
+                        <div class="troop-row">
+                            <span class="troop-label">轻骑兵</span>
+                            <span class="troop-value" id="detailLightCavalry">2000</span>
+                        </div>
+                        <div class="troop-row">
+                            <span class="troop-label">重骑兵</span>
+                            <span class="troop-value" id="detailHeavyCavalry">1000</span>
+                        </div>
+                        <div class="troop-row">
+                            <span class="troop-label">重步兵</span>
+                            <span class="troop-value" id="detailHeavyInfantry">20000</span>
+                        </div>
+                        <div class="troop-row">
+                            <span class="troop-label">轻装步兵</span>
+                            <span class="troop-value" id="detailLightInfantry">2000</span>
+                        </div>
+                    </div>
+                    <div class="army-commander-stats">
+                        <div class="commander-header">将领能力</div>
+                        <div class="stat-row">
+                            <span class="stat-label">军事:</span>
+                            <span class="stat-value" id="detailMilitary">8</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">政治:</span>
+                            <span class="stat-value" id="detailPolitical">8</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">外交:</span>
+                            <span class="stat-value" id="detailDiplomatic">8</span>
+                        </div>
+                    </div>
+                    <div class="army-stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-label">士气:</span>
+                            <span class="stat-value" id="detailMorale">5</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">战斗力</span>
+                            <span class="stat-value combat-power" id="detailCombatPower">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-section" id="cityDetailsPanel" style="display: none;">
+                <h3>城市详情</h3>
+                <div class="city-details">
+                    <div class="city-header">
+                        <div class="city-name" id="detailCityName">城市名称</div>
+                        <div class="city-importance" id="detailCityImportance">普通城市</div>
+                    </div>
+                    <div class="city-scores">
+                        <div class="score-row">
+                            <span class="score-label">政治分数:</span>
+                            <span class="score-value" id="detailCityPolitical">1</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">经济分数:</span>
+                            <span class="score-value" id="detailCityEconomic">1</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">工事等级:</span>
+                            <span class="score-value" id="detailCityFortification">0</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对罗马态度:</span>
+                            <span class="score-value" id="detailCityRomeAttitude">0</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对迦太基态度:</span>
+                            <span class="score-value" id="detailCityCarthageAttitude">0</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对马其顿态度:</span>
+                            <span class="score-value" id="detailCityMacedoniaAttitude">0</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对塞琉古态度:</span>
+                            <span class="score-value" id="detailCitySeleucidAttitude">0</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">对托勒密态度:</span>
+                            <span class="score-value" id="detailCityPtolemyAttitude">0</span>
+                        </div>
+                    </div>
+                    <div class="city-military">
+                        <div class="military-header">军事状况</div>
+                        <div class="siege-row">
+                            <span class="siege-label">围城状态</span>
+                            <span class="siege-value" id="detailCitySiege">无</span>
+                        </div>
+                        <div class="faction-row">
+                            <span class="faction-label">势力归属:</span>
+                            <span class="faction-value" id="detailCityFaction">中立</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="panel-section">
+                <h3>游戏管理</h3>
+                <div class="game-management">
+                    <button class="btn save-btn" onclick="saveGame()">保存游戏</button>
+                    <button class="btn load-btn" onclick="loadGame()">加载游戏</button>
+                    <button class="btn reset-btn" onclick="resetGame()">重置游戏</button>
+                    <button class="btn fix-btn" onclick="manualFixCoordinates()">修复坐标</button>
+                    <button class="btn map-control-btn" onclick="toggleMapControl()">地图控制</button>
+                </div>
+                <div class="game-management" style="margin-top: 10px;">
+                    <button class="btn export-btn" onclick="exportCoordinates()">导出坐标</button>
+                    <button class="btn import-btn" onclick="document.getElementById('coordinateImportFile').click()">导入坐标</button>
+                    <input type="file" id="coordinateImportFile" accept=".json" style="display: none;" onchange="importCoordinates(event)">
+                </div>
+            </div>
+            
+            <!-- 音量控制栏目 -->
+            <div class="panel-section">
+                <h3>🎵 背景音乐</h3>
+                <div style="padding: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <button class="btn" id="musicToggleBtn" onclick="toggleMusic()" style="background-color: #e74c3c; flex: 1;">
+                            <span id="musicToggleIcon">⏸️</span> <span id="musicToggleText">暂停音乐</span>
+                        </button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 12px; color: #ecf0f1; min-width: 50px;">音量：</span>
+                        <input type="range" id="volumeSlider" min="0" max="100" value="50" 
+                               oninput="updateVolume(this.value)" 
+                               style="flex: 1; cursor: pointer;">
+                        <span id="volumeValue" style="font-size: 12px; color: #f39c12; min-width: 35px; text-align: right;">50%</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 10px; color: #95a5a6; text-align: center;">
+                        Divinitus - 史诗背景音乐
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 背景音乐 -->
+    <audio id="bgMusic" loop autoplay>
+        <source src="divinitus.mp3" type="audio/mpeg">
+        您的浏览器不支持音频播放。
+    </audio>
+
+    <!-- 引入游戏数据模块 -->
+    <script src="js/gameData.js"></script>
+    
+    <!-- 引入战斗系统集成模块 -->
+    <script src="js/battleSystemIntegration.js"></script>
+    
+    <!-- 引入主逻辑模块 -->
+    <script src="js/main.js"></script>
+    
+    <!-- 引入主逻辑模块 -->
+    <script src="js/main1.js"></script>
+
+    <!-- 引入主逻辑模块 -->
+    <script src="js/main2.js"></script>
+
+    <!-- 引入主逻辑模块 -->
+    <script src="js/main3.js"></script>
+
+    <!-- 引入AI控制器 -->
+    <script src="js/ai-controller.js"></script>
+    
+    <!-- 引入迦太基AI控制器 -->
+    <script src="js/ai-controller-carthage.js"></script>
+
+    <!-- 引入马其顿AI控制器 -->
+    <script src="js/ai-controller-macedonia.js"></script>
+
+    <!-- 引入塞琉古AI控制器 -->
+    <script src="js/ai-controller-seleucid.js"></script>
+    
+    <!-- 引入托勒密AI控制器 -->
+    <script src="js/ai-controller-ptolemy.js"></script>
+
+    <!-- 引入手动增加军队模块 -->
+    <script src="js/add-army.js"></script>
+
+    <!-- 引入初始坐标数据（可选，如果存在则自动加载） -->
+    <script src="js/initialCoordinates.js" onerror="console.log('未找到初始坐标文件，将使用默认坐标')"></script>
+
+    <!-- 游戏初始化 -->
+    <script>
+        // 背景音乐控制
+        const bgMusic = document.getElementById('bgMusic');
+        bgMusic.volume = 0.5; // 初始音量50%
+        
+        // 切换音乐播放/暂停
+        function toggleMusic() {
+            const musicToggleBtn = document.getElementById('musicToggleBtn');
+            const musicToggleIcon = document.getElementById('musicToggleIcon');
+            const musicToggleText = document.getElementById('musicToggleText');
+            
+            if (bgMusic.paused) {
+                bgMusic.play().then(() => {
+                    musicToggleIcon.textContent = '⏸️';
+                    musicToggleText.textContent = '暂停音乐';
+                    musicToggleBtn.style.backgroundColor = '#e74c3c';
+                }).catch(error => {
+                    console.error('音乐播放失败:', error);
+                    alert('音乐播放失败，请检查音频文件是否存在');
+                });
+            } else {
+                bgMusic.pause();
+                musicToggleIcon.textContent = '▶️';
+                musicToggleText.textContent = '播放音乐';
+                musicToggleBtn.style.backgroundColor = '#3498db';
+            }
+        }
+        
+        // 更新音量
+        function updateVolume(value) {
+            bgMusic.volume = value / 100;
+            document.getElementById('volumeValue').textContent = value + '%';
+        }
+        
+        // 全局暂停/继续切换函数
+        function toggleGlobalPause() {
+            console.log('🔍 toggleGlobalPause 被调用');
+            
+            // 检查 gameState 是否存在
+            if (typeof gameState === 'undefined') {
+                console.error('❌ gameState 不存在');
+                alert('游戏尚未初始化，请稍后再试');
+                return;
+            }
+            
+            // 初始化暂停状态
+            if (gameState.paused === undefined) {
+                gameState.paused = false;
+            }
+            
+            // 切换暂停状态
+            gameState.paused = !gameState.paused;
+            console.log('🔍 暂停状态切换为:', gameState.paused);
+            
+            // 更新按钮显示
+            const pauseBtn = document.getElementById('globalPauseBtn');
+            const pauseIcon = document.getElementById('pauseIcon');
+            const pauseText = document.getElementById('pauseText');
+            
+            if (!pauseBtn || !pauseIcon || !pauseText) {
+                console.error('❌ 找不到暂停按钮元素', {pauseBtn, pauseIcon, pauseText});
+                return;
+            }
+            
+            // 确保按钮始终可点击
+            pauseBtn.disabled = false;
+            pauseBtn.style.pointerEvents = 'auto';
+            
+            if (gameState.paused) {
+                // 暂停状态：显示继续按钮
+                pauseBtn.style.backgroundColor = '#e74c3c';
+                pauseIcon.textContent = '▶️';
+                pauseText.textContent = '继续游戏';
+                console.log('⏸️ 游戏已暂停');
+            } else {
+                // 继续状态：显示暂停按钮
+                pauseBtn.style.backgroundColor = '#f39c12';
+                pauseIcon.textContent = '⏸️';
+                pauseText.textContent = '暂停游戏';
+                console.log('▶️ 游戏已继续');
+                
+                // 恢复时，如果在看海模式且是AI回合，继续执行AI
+                if (gameState.watchMode) {
+                    const currentPlayer = gameState.currentPlayer;
+                    
+                    if (currentPlayer === 'rome' && AIController.shouldControl()) {
+                        setTimeout(async () => {
+                            await AIController.executeTurn();
+                            if (gameState.watchModeAutoCarthage) {
+                                setTimeout(async () => {
+                                    await window.endTurn();
+                                }, 1000);
+                            }
+                        }, 500);
+                    } else if (currentPlayer === 'carthage' && CarthageAIController.shouldControl()) {
+                        setTimeout(async () => {
+                            await CarthageAIController.executeTurn();
+                            if (gameState.watchModeAutoCarthage) {
+                                setTimeout(async () => {
+                                    await window.endTurn();
+                                }, 1000);
+                            }
+                        }, 500);
+                    } else if (currentPlayer === 'macedonia' && typeof MacedoniaAIController !== 'undefined' && MacedoniaAIController.shouldControl()) {
+                        setTimeout(async () => {
+                            await MacedoniaAIController.executeTurn();
+                            setTimeout(async () => {
+                                await window.endTurn();
+                            }, 1000);
+                        }, 500);
+                    } else if (currentPlayer === 'seleucid' && typeof SeleucidAIController !== 'undefined' && SeleucidAIController.shouldControl()) {
+                        setTimeout(async () => {
+                            await SeleucidAIController.executeTurn();
+                            setTimeout(async () => {
+                                await window.endTurn();
+                            }, 1000);
+                        }, 500);
+                    } else if (currentPlayer === 'ptolemy' && typeof PtolemyAIController !== 'undefined' && PtolemyAIController.shouldControl()) {
+                        setTimeout(async () => {
+                            await PtolemyAIController.executeTurn();
+                            setTimeout(async () => {
+                                await window.endTurn();
+                            }, 1000);
+                        }, 500);
+                    }
+                }
+            }
+        }
+        
+        // 游戏日志暂停/继续切换函数
+        function toggleLogPause() {
+            // 初始化暂停状态
+            if (window.gameLogPaused === undefined) {
+                window.gameLogPaused = false;
+            }
+            
+            // 切换暂停状态
+            window.gameLogPaused = !window.gameLogPaused;
+            
+            // 更新按钮显示
+            const pauseBtn = document.getElementById('logPauseBtn');
+            const pauseIcon = document.getElementById('logPauseIcon');
+            const pauseText = document.getElementById('logPauseText');
+            
+            if (window.gameLogPaused) {
+                // 暂停状态：显示继续按钮
+                pauseBtn.style.backgroundColor = '#e74c3c';
+                pauseIcon.textContent = '▶️';
+                pauseText.textContent = '继续';
+                console.log('📋 游戏日志已暂停');
+            } else {
+                // 继续状态：显示暂停按钮
+                pauseBtn.style.backgroundColor = '#95a5a6';
+                pauseIcon.textContent = '⏸️';
+                pauseText.textContent = '暂停';
+                console.log('📋 游戏日志已继续');
+                
+                // 恢复时，将缓存的日志全部添加进来
+                if (window.pausedLogBuffer && window.pausedLogBuffer.length > 0) {
+                    console.log(`📋 恢复 ${window.pausedLogBuffer.length} 条缓存日志`);
+                    const gameLog = document.getElementById('gameLog');
+                    
+                    window.pausedLogBuffer.forEach(({ message, player }) => {
+                        const logEntry = document.createElement('div');
+                        
+                        // 处理特殊的日志类
+                        if (player === 'error') {
+                            logEntry.className = 'log-entry error';
+                        } else if (player === 'system') {
+                            logEntry.className = 'log-entry system';
+                        } else if (player === 'historical') {
+                            logEntry.className = 'log-entry historical-event';
+                        } else {
+                            logEntry.className = `log-entry${player ? ' ' + player : ''}`;
+                        }
+                        
+                        logEntry.textContent = message;
+                        gameLog.appendChild(logEntry);
+                    });
+                    
+                    // 滚动到底部
+                    gameLog.scrollTop = gameLog.scrollHeight;
+                    
+                    // 清空缓存
+                    window.pausedLogBuffer = [];
+                }
+            }
+        }
+        
+        // 看海模式切换函数
+        function toggleWatchMode() {
+            if (!gameState.watchMode) {
+                // 启用看海模式
+                gameState.watchMode = true;
+                
+                // 同时启用五个AI（罗马、迦太基、马其顿、塞琉古、托勒密）
+                if (!AIController.config.enabled) {
+                    AIController.enable('rome');  // 需要传入faction参数
+                }
+                if (!CarthageAIController.config.enabled) {
+                    CarthageAIController.enable();  // 迦太基AI不需要参数
+                }
+                // 启用马其顿AI（默认使用亚历山大战略）
+                if (typeof MacedoniaAIController !== 'undefined' && !MacedoniaAIController.config.enabled) {
+                    MacedoniaAIController.enable('alexander');
+                }
+                // 启用塞琉古AI（默认使用安条克战略）
+                if (typeof SeleucidAIController !== 'undefined' && !SeleucidAIController.config.enabled) {
+                    SeleucidAIController.enable('antiochus');
+                }
+                // 启用托勒密AI（默认使用安条克战略）
+                if (typeof PtolemyAIController !== 'undefined' && !PtolemyAIController.config.enabled) {
+                    PtolemyAIController.enable('antiochus');
+                }
+                
+                // 更新按钮样式
+                const watchBtn = document.querySelector('.ai-watch-btn');
+                if (watchBtn) {
+                    watchBtn.textContent = '🛑 停止看海';
+                    watchBtn.style.backgroundColor = '#c0392b';
+                }
+                
+                // 更新状态显示
+                document.getElementById('aiStatus').textContent = 'AI: 看海模式';
+                
+                // 根据自动模式设置显示不同消息（日志已禁用）
+                
+                // 隐藏行动选择栏目
+                const actionPanel = document.getElementById('actionSelectionPanel');
+                if (actionPanel) {
+                    actionPanel.style.display = 'none';
+                }
+                
+                // 禁用大部分按钮
+                toggleGameButtons(true);  // disabled = true 表示禁用
+                
+                // 如果当前是AI的回合，立即执行
+                if (gameState.currentPlayer === 'rome' && AIController.shouldControl()) {
+                    setTimeout(async () => {
+                        await AIController.executeTurn();
+                        
+                        setTimeout(async () => {
+                            await window.endTurn();
+                        }, 1000);
+                    }, 1000);
+                } else if (gameState.currentPlayer === 'carthage' && CarthageAIController.shouldControl()) {
+                    setTimeout(async () => {
+                        await CarthageAIController.executeTurn();
+                        
+                        // 根据自动模式设置决定是否自动结束回合
+                        if (gameState.watchModeAutoCarthage) {
+                            setTimeout(async () => {
+                                await window.endTurn();
+                            }, 1000);
+                        } else {
+                            toggleGameButtons(true); // disabled = true，但会根据当前回合调整
+                        }
+                    }, 1000);
+                }
+            } else {
+                // 关闭看海模式
+                gameState.watchMode = false;
+                
+                // 禁用所有AI控制器
+                if (AIController.config.enabled) {
+                    AIController.disable();
+                }
+                if (CarthageAIController.config.enabled) {
+                    CarthageAIController.disable();
+                }
+                if (typeof MacedoniaAIController !== 'undefined' && MacedoniaAIController.config.enabled) {
+                    MacedoniaAIController.disable();
+                }
+                if (typeof SeleucidAIController !== 'undefined' && SeleucidAIController.config.enabled) {
+                    SeleucidAIController.disable();
+                }
+                if (typeof PtolemyAIController !== 'undefined' && PtolemyAIController.config.enabled) {
+                    PtolemyAIController.disable();
+                }
+                
+                // 更新按钮样式
+                const watchBtn = document.querySelector('.ai-watch-btn');
+                if (watchBtn) {
+                    watchBtn.textContent = '🍿 看海模式';
+                    watchBtn.style.backgroundColor = '#e67e22';
+                }
+                
+                // 更新状态显示
+                document.getElementById('aiStatus').textContent = 'AI: 已关闭';
+                
+                // 恢复显示行动选择栏目
+                const actionPanel = document.getElementById('actionSelectionPanel');
+                if (actionPanel) {
+                    actionPanel.style.display = 'block';
+                }
+                
+                // 恢复按钮
+                toggleGameButtons(false);  // disabled = false 表示恢复按钮
+            }
+        }
+
+        // 切换看海模式自动结束迦太基回合
+        function toggleWatchModeAuto() {
+            const checkbox = document.getElementById('watchModeAutoCheckbox');
+            gameState.watchModeAutoCarthage = checkbox.checked;
+            
+            // 如果在看海模式中，立即更新按钮状态
+            if (gameState.watchMode) {
+                toggleGameButtons(true);  // disabled = true，会根据当前回合和设置调整
+            }
+        }
+
+        // 切换军队数量限制
+        function toggleArmyLimit() {
+            const checkbox = document.getElementById('armyLimitCheckbox');
+            gameState.armyLimitEnabled = checkbox.checked;
+        }
+
+        // 切换马其顿AI控制
+        function toggleMacedoniaAI() {
+            if (typeof MacedoniaAIController === 'undefined') {
+                console.error('❌ 马其顿AI控制器未加载');
+                return;
+            }
+
+            const strategyPanel = document.getElementById('macedoniaStrategyPanel');
+            
+            if (MacedoniaAIController.config.enabled) {
+                // 禁用马其顿AI
+                MacedoniaAIController.disable();
+                if (strategyPanel) {
+                    strategyPanel.style.display = 'none';
+                }
+            } else {
+                // 启用马其顿AI（默认使用亚历山大战略）
+                MacedoniaAIController.enable('alexander');
+                if (strategyPanel) {
+                    strategyPanel.style.display = 'block';
+                }
+            }
+        }
+
+        // 切换塞琉古AI控制
+        function toggleSeleucidAI() {
+            if (typeof SeleucidAIController === 'undefined') {
+                console.error('❌ 塞琉古AI控制器未加载');
+                return;
+            }
+
+            const strategyPanel = document.getElementById('seleucidStrategyPanel');
+            
+            if (SeleucidAIController.config.enabled) {
+                // 禁用塞琉古AI
+                SeleucidAIController.disable();
+                if (strategyPanel) {
+                    strategyPanel.style.display = 'none';
+                }
+            } else {
+                // 启用塞琉古AI（默认使用安条克战略）
+                SeleucidAIController.enable('antiochus');
+                if (strategyPanel) {
+                    strategyPanel.style.display = 'block';
+                }
+            }
+        }
+
+        // 切换托勒密AI控制
+        function togglePtolemyAI() {
+            if (typeof PtolemyAIController === 'undefined') {
+                console.error('❌ 托勒密AI控制器未加载');
+                return;
+            }
+
+            const strategyPanel = document.getElementById('ptolemyStrategyPanel');
+            
+            if (PtolemyAIController.config.enabled) {
+                // 禁用托勒密AI
+                PtolemyAIController.disable();
+                if (strategyPanel) {
+                    strategyPanel.style.display = 'none';
+                }
+            } else {
+                // 启用托勒密AI（默认使用安条克战略）
+                PtolemyAIController.enable('antiochus');
+                if (strategyPanel) {
+                    strategyPanel.style.display = 'block';
+                }
+            }
+        }
+
+        // 立即执行当前阵营的AI
+        function executeCurrentAI() {
+            const currentPlayer = gameState.currentPlayer;
+            
+            if (currentPlayer === 'rome' && AIController.shouldControl()) {
+                console.log('⚡ 立即执行罗马AI...');
+                AIController.executeTurn();
+            } else if (currentPlayer === 'carthage' && typeof CarthageAIController !== 'undefined' && CarthageAIController.shouldControl()) {
+                console.log('⚡ 立即执行迦太基AI...');
+                CarthageAIController.executeTurn();
+            } else if (currentPlayer === 'macedonia' && typeof MacedoniaAIController !== 'undefined' && MacedoniaAIController.shouldControl()) {
+                console.log('⚡ 立即执行马其顿AI...');
+                MacedoniaAIController.executeTurn();
+            } else if (currentPlayer === 'seleucid' && typeof SeleucidAIController !== 'undefined' && SeleucidAIController.shouldControl()) {
+                console.log('⚡ 立即执行塞琉古AI...');
+                SeleucidAIController.executeTurn();
+            } else if (currentPlayer === 'ptolemy' && typeof PtolemyAIController !== 'undefined' && PtolemyAIController.shouldControl()) {
+                console.log('⚡ 立即执行托勒密AI...');
+                PtolemyAIController.executeTurn();
+            } else {
+                console.warn('⚠️ 当前阵营未启用AI控制');
+            }
+        }
+
+        // 禁用/启用游戏按钮
+        function toggleGameButtons(disabled) {
+            const endTurnBtn = document.querySelector('.end-turn-btn');
+            const skipBtn = document.querySelector('.skip-btn');
+            const pauseBtn = document.getElementById('globalPauseBtn');
+            
+            if (disabled) {
+                // 看海模式下，根据设置决定是否启用迦太基回合的结束按钮
+                if (gameState.currentPlayer === 'carthage' && !gameState.watchModeAutoCarthage) {
+                    // 迦太基回合且设置为手动控制，启用按钮
+                    endTurnBtn.disabled = false;
+                    endTurnBtn.style.opacity = '1';
+                    endTurnBtn.style.cursor = 'pointer';
+                    endTurnBtn.style.backgroundColor = '#e74c3c';
+                } else {
+                    // 其他情况禁用按钮
+                    endTurnBtn.disabled = true;
+                    endTurnBtn.style.opacity = '0.3';
+                    endTurnBtn.style.cursor = 'not-allowed';
+                    endTurnBtn.style.backgroundColor = '#95a5a6';
+                }
+                
+                // 跳过按钮始终禁用
+                if (skipBtn) {
+                    skipBtn.disabled = true;
+                    skipBtn.style.opacity = '0.3';
+                    skipBtn.style.cursor = 'not-allowed';
+                }
+                
+                // ⚠️ 重要：暂停按钮始终保持启用状态
+                if (pauseBtn) {
+                    pauseBtn.disabled = false;
+                    pauseBtn.style.opacity = '1';
+                    pauseBtn.style.cursor = 'pointer';
+                }
+            } else {
+                // 恢复按钮
+                endTurnBtn.disabled = false;
+                endTurnBtn.style.opacity = '1';
+                endTurnBtn.style.cursor = 'pointer';
+                endTurnBtn.style.backgroundColor = '#e74c3c';
+                
+                if (skipBtn) {
+                    skipBtn.disabled = false;
+                    skipBtn.style.opacity = '1';
+                    skipBtn.style.cursor = 'pointer';
+                }
+                
+                // 暂停按钮也恢复
+                if (pauseBtn) {
+                    pauseBtn.disabled = false;
+                    pauseBtn.style.opacity = '1';
+                    pauseBtn.style.cursor = 'pointer';
+                }
+            }
+        }
+
+        // 页面加载时初始化游戏
+        window.onload = async function() {
+            // 优先级1: 检查是否加载了 initialCoordinates.js 中的数据
+            if (typeof initialCoordinatesData !== 'undefined' && initialCoordinatesData) {
+                console.log('找到初始坐标数据，正在应用...');
+                // 应用初始坐标数据（不需要调用函数，直接赋值）
+                if (initialCoordinatesData.cities) {
+                    initialCoordinatesData.cities.forEach(savedCity => {
+                        const city = cities.find(c => c.id === savedCity.id);
+                        if (city) {
+                            city.x = savedCity.x;
+                            city.y = savedCity.y;
+                        }
+                    });
+                    addLog('已加载初始坐标文件', 'system');
+                }
+            } else {
+                // 优先级2: 尝试从localStorage加载
+                const localLoaded = loadCoordinates();
+                if (localLoaded) {
+                    addLog('使用LocalStorage保存的坐标数据', 'system');
+                } else {
+                    console.log('未找到保存的坐标，使用默认坐标');
+                }
+            }
+            
+            // 初始化游戏（会执行absoluteFix绝对坐标修复）
+            initGame();
+            
+            // 确保暂停按钮始终可用
+            setTimeout(() => {
+                const pauseBtn = document.getElementById('globalPauseBtn');
+                if (pauseBtn) {
+                    pauseBtn.disabled = false;
+                    pauseBtn.style.pointerEvents = 'auto';
+                    pauseBtn.style.opacity = '1';
+                    pauseBtn.style.cursor = 'pointer';
+                    console.log('✅ 暂停按钮已初始化为可用状态');
+                }
+            }, 1000);
+        };
+        
+        // 页面卸载前自动保存坐标
+        window.addEventListener('beforeunload', function(e) {
+            // 静默保存坐标，不显示日志
+            try {
+                const coordinateData = {
+                    timestamp: new Date().toISOString(),
+                    cities: cities.map(city => ({
+                        id: city.id,
+                        name: city.name,
+                        x: Math.round(city.x),
+                        y: Math.round(city.y),
+                        faction: city.faction,
+                        important: city.important,
+                        isUnderSiege: city.isUnderSiege,
+                        siegeCount: city.siegeCount,
+                        besiegingFaction: city.besiegingFaction
+                    }))
+                };
+                localStorage.setItem('punic_war_coordinates', JSON.stringify(coordinateData));
+            } catch (error) {
+                console.error('页面卸载前保存坐标失败', error);
+            }
+        });
+    </script>
+</body>
+</html>
